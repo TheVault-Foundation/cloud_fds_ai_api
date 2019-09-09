@@ -81,55 +81,90 @@ class Controller:
     def device(self, request):
         Log.info('device()')
 
-        sessionToken = request.headers.get("Authentication", "")
+        try:
+            sessionToken = request.headers.get("Authentication", "")
+            if self.isValidSessionToken(sessionToken):
+                retList = []
+                for d in DeviceType.objects:
+                    retList.append({'device_id': d.deviceId, 'device_type': d.deviceType})
+                
+                return json.dumps(retList)
 
-        if self.isValidSessionToken(sessionToken):
-            retList = []
-            for d in DeviceType.objects:
-                retList.append({'device_id': d.deviceId, 'device_type': d.deviceType})
+            else:
+                return {
+                    "error": "Invalid Authentication."
+                }, 403
             
-            return json.dumps(retList)
-
-        else:
+        except:
+            Log.error(traceback.format_exc())
             return {
-                "error": "Invalid Authentication."
-            }, 403
+                "error": "An error occurred."
+            }, 500
+
 
     def check(self, request):
         Log.info('check()')
         Log.info(request.data)
 
-        sessionToken = request.headers.get("Authentication", "")
-        doc = self.isValidSessionToken(sessionToken)
-        if doc:
-            #
-            #
-            #
-            
-            return {
-            }, 200
+        try:
+            sessionToken = request.headers.get("Authentication", "")
+            tokenDoc = self.isValidSessionToken(sessionToken)
+            if tokenDoc:
+                reqData = request.data
 
-        else:
+                trans = Transaction(
+                                userId = tokenDoc.getUserId(),
+                                fromAddress = reqData.get('fromAddress', ''),
+                                fromCurrency = reqData.get('fromCurrency', ''),
+                                toAddress = reqData.get('toAddress', ''),
+                                toCurrency = reqData.get('toCurrency', reqData.get('fromCurrency', '')),
+                                amount = float(reqData.get('amount', '0.0')),
+                                senderDeviceId = int(reqData.get('senderDeviceId', '')),
+                                senderIp = reqData.get('senderIp', ''),
+                                transactedAt = datetime.strptime(reqData.get('transactedAt', ''), '%Y%m%dT%H%M')
+                )
+                trans.save()
+                
+                return { 
+                    'request': reqData,
+                    'score': trans.score
+                }, 200
+
+            else:
+                return {
+                    "error": "Invalid Authentication."
+                }, 403
+            
+        except:
+            Log.error(traceback.format_exc())
             return {
-                "error": "Invalid Authentication."
-            }, 403
+                "error": "An error occurred."
+            }, 500
+
 
     def close(self, request):
         Log.info('close()')
         
-        sessionToken = request.headers.get("Authentication", "")
-        doc = self.isValidSessionToken(sessionToken)
-        if doc:
-            doc.expireAt = datetime.utcnow
-            doc.save()
-            
-            return {
-            }, 200
+        try:            
+            sessionToken = request.headers.get("Authentication", "")
+            tokenDoc = self.isValidSessionToken(sessionToken)
+            if tokenDoc:
+                tokenDoc.expireAt = datetime.utcnow
+                tokenDoc.save()
+                
+                return {
+                }, 200
 
-        else:
+            else:
+                return {
+                    "error": "Invalid Authentication."
+                }, 403
+
+        except:
+            Log.error(traceback.format_exc())
             return {
-                "error": "Invalid Authentication."
-            }, 403
+                "error": "An error occurred."
+            }, 500
 
 
 

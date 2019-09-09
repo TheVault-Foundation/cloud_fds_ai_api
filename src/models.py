@@ -5,6 +5,8 @@ sys.path.append('../config')
 
 import config
 
+from bson.objectid import ObjectId
+
 from mongoengine import *
 connect(config.MONGO_DB["NAME"], host=config.MONGO_DB["HOST"], port=config.MONGO_DB["PORT"], username=config.MONGO_DB["USERNAME"], password=config.MONGO_DB["PASSWORD"])
 
@@ -77,10 +79,11 @@ class Transaction(Document):
     fromCurrency = StringField(required=True, max_length=20)
     toAddress = StringField(required=True, max_length=200)
     toCurrency = StringField(required=True, max_length=20)
-    amount = DecimalField(required=True)
-    senderDevice = ObjectIdField(required=False)
+    amount = DecimalField(required=True, precision=10)
+    senderDeviceId = IntField(required=False)
     senderIp = StringField(required=False, max_length=20)
-    transactedAt = DateTimeField(required=True)
+    country = StringField(required=True, default='', max_length=20)
+    transactedAt = DateTimeField(required=False)
     score = DecimalField(required=True, default=0)
     txHash = StringField(required=False, max_length=200)
     createdAt = DateTimeField(default = datetime.utcnow)
@@ -126,6 +129,14 @@ class ApiSessionToken(Document):
         ]
     }
 
+    def getUserId(self):
+        try:
+            api = UserApi.objects.get(id=ObjectId(self.apiId))
+            return api.userId
+        except:
+            Log.error(traceback.format_exc())
+            return None
+
 
 class UserInvoice(Document):
     userId = ObjectIdField(required=True)
@@ -149,3 +160,42 @@ class BillingType(Document):
     billingType = StringField(required=True, regex=r'^(Monthly|Metered)$', unique=True)
     
     meta = {'collection': 'billingType'}
+
+
+class IpToCountry(Document):
+    ipFrom = IntField(required=True)
+    ipTo = IntField(required=True)
+    registry = StringField(required=False, max_length=50)
+    assigned = DateTimeField(required=False)
+    ctry = StringField(required=True, max_length=20)
+    cntry = StringField(required=True, max_length=20)
+    country = StringField(required=True, max_length=50)
+    
+    meta = {
+        'collection': 'ipToCountry',
+        'indexes': [
+            'ipFrom',
+            'ipTo',
+            'ctry',
+            'country'
+        ]
+    }
+
+class IpToCountryTmp(Document):
+    ipFrom = IntField(required=True)
+    ipTo = IntField(required=True)
+    registry = StringField(required=False, max_length=50)
+    assigned = DateTimeField(required=False)
+    ctry = StringField(required=True, max_length=20)
+    cntry = StringField(required=True, max_length=20)
+    country = StringField(required=True, max_length=50)
+    
+    meta = {
+        'collection': 'ipToCountry_tmp',
+        'indexes': [
+            'ipFrom',
+            'ipTo',
+            'ctry',
+            'country'
+        ]
+    }
