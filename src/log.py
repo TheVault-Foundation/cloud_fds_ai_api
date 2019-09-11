@@ -1,5 +1,5 @@
 import sys 
-sys.path.append('../config')
+# sys.path.append('../config')
 
 import config
 

@@ -8,10 +8,11 @@ from mongoengine.connection import _get_db
 from models import IpToCountry, IpToCountryTmp
 
 def importFile(filePath):
-    f = open(filePath, "r")
+    f = open(filePath, "r", encoding = "ISO-8859-1")
 
     db = _get_db()
-    db.drop_collection('ipToCountry_Tmp')
+    if 'ipToCountry_tmp' in db.collection_names(False):
+        db.drop_collection('ipToCountry_tmp')
 
     i = 0
     for line in f:
@@ -38,9 +39,11 @@ def importFile(filePath):
 
     f.close()
     
-    db.drop_collection('ipToCountry_bak')
-    db["ipToCountry"].rename("ipToCountry_bak")
-    db["ipToCountry_Tmp"].rename("ipToCountry")
+    if 'ipToCountry_bak' in db.collection_names(False):
+        db.drop_collection('ipToCountry_bak')
+    if 'ipToCountry' in db.collection_names(False):
+        db["ipToCountry"].rename("ipToCountry_bak")
+    db["ipToCountry_tmp"].rename("ipToCountry")
 
 
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import sys 
-sys.path.append('../config')
+# sys.path.append('../config')
 
 import config
 
@@ -82,8 +82,8 @@ class Transaction(Document):
     amount = DecimalField(required=True, precision=10)
     senderDeviceId = IntField(required=False)
     senderIp = StringField(required=False, max_length=20)
-    country = StringField(required=True, default='', max_length=20)
-    transactedAt = DateTimeField(required=False)
+    country = StringField(required=False, max_length=20)
+    transactedAt = DateTimeField(required=False)  #StringField(required=False, max_length=15)
     score = DecimalField(required=True, default=0)
     txHash = StringField(required=False, max_length=200)
     createdAt = DateTimeField(default = datetime.utcnow)

@@ -9,6 +9,8 @@ def create():
     billing = BillingType(billingType = 'Metered')
     billing.save()
 
+    device = DeviceType(deviceId = 0, deviceType='Not Provided')
+    device.save()
     device = DeviceType(deviceId = 1, deviceType='PC Wallet')
     device.save()
     device = DeviceType(deviceId = 2, deviceType='Web Browser')

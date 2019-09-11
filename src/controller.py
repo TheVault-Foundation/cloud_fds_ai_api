@@ -7,11 +7,15 @@ from dateutil.relativedelta import relativedelta
 
 import traceback
 
+import utils
 from log import Log
 from models import *
+from check_transaction import CheckTransaction
 
 import json
 from hashlib import sha256
+
+from flask import jsonify
 
 
 class Controller:
@@ -20,6 +24,9 @@ class Controller:
     def __init__(self):
         pass
         # Log.info('__init__()')
+
+    def ResError(self, code, message):
+        return jsonify({ "error": {"message": message, "code": code} }), code
 
     def generateSessionToken(self, api):
         curTime = datetime.utcnow()       ### UTC now()
@@ -64,42 +71,34 @@ class Controller:
             api = UserApi.objects.get(apiKey=apiKey, apiSecret=apiSecret, isActive=True)
             sessionToken = self.generateSessionToken(api)
 
-            return {
+            return jsonify({
                 'session_token': sessionToken,
                 'lifetime': self.SESSION_TOKEN_LIFETIME
-            }, 200            
+            }), 200            
         except DoesNotExist:
-            return {
-                "error": "Invalid api."
-            }, 403
+            return self.ResError(403, "Invalid api.")
         except:
             Log.error(traceback.format_exc())
-            return {
-                "error": "An error occurred."
-            }, 500
+            return self.ResError(500, "An error occurred.")
 
     def device(self, request):
         Log.info('device()')
 
         try:
-            sessionToken = request.headers.get("Authentication", "")
+            sessionToken = request.headers.get("Authorization", "").split(' ')[1]
             if self.isValidSessionToken(sessionToken):
                 retList = []
                 for d in DeviceType.objects:
                     retList.append({'device_id': d.deviceId, 'device_type': d.deviceType})
                 
-                return json.dumps(retList)
+                return json.dumps(retList), 200
 
             else:
-                return {
-                    "error": "Invalid Authentication."
-                }, 403
+                return self.ResError(401, "Invalid Authentication.")
             
         except:
             Log.error(traceback.format_exc())
-            return {
-                "error": "An error occurred."
-            }, 500
+            return self.ResError(500, "An error occurred.")
 
 
     def check(self, request):
@@ -107,64 +106,39 @@ class Controller:
         Log.info(request.data)
 
         try:
-            sessionToken = request.headers.get("Authentication", "")
+            sessionToken = request.headers.get("Authorization", "").split(' ')[1]
             tokenDoc = self.isValidSessionToken(sessionToken)
             if tokenDoc:
                 reqData = request.data
 
-                trans = Transaction(
-                                userId = tokenDoc.getUserId(),
-                                fromAddress = reqData.get('fromAddress', ''),
-                                fromCurrency = reqData.get('fromCurrency', ''),
-                                toAddress = reqData.get('toAddress', ''),
-                                toCurrency = reqData.get('toCurrency', reqData.get('fromCurrency', '')),
-                                amount = float(reqData.get('amount', '0.0')),
-                                senderDeviceId = int(reqData.get('senderDeviceId', '')),
-                                senderIp = reqData.get('senderIp', ''),
-                                transactedAt = datetime.strptime(reqData.get('transactedAt', ''), '%Y%m%dT%H%M')
-                )
-                trans.save()
+                check = CheckTransaction(tokenDoc, reqData)
                 
-                return { 
-                    'request': reqData,
-                    'score': trans.score
-                }, 200
+                return check.process()
 
             else:
-                return {
-                    "error": "Invalid Authentication."
-                }, 403
+                return self.ResError(401, "Invalid Authentication.")
             
         except:
             Log.error(traceback.format_exc())
-            return {
-                "error": "An error occurred."
-            }, 500
+            return self.ResError(500, "An error occurred.")
 
 
     def close(self, request):
         Log.info('close()')
         
         try:            
-            sessionToken = request.headers.get("Authentication", "")
+            sessionToken = request.headers.get("Authorization", "").split(' ')[1]
             tokenDoc = self.isValidSessionToken(sessionToken)
             if tokenDoc:
                 tokenDoc.expireAt = datetime.utcnow
                 tokenDoc.save()
                 
-                return {
-                }, 200
+                return jsonify({
+                }), 201
 
             else:
-                return {
-                    "error": "Invalid Authentication."
-                }, 403
+                return self.ResError(401, "Invalid Authentication.")
 
         except:
             Log.error(traceback.format_exc())
-            return {
-                "error": "An error occurred."
-            }, 500
-
-
-
+            return self.ResError(500, "An error occurred.")
