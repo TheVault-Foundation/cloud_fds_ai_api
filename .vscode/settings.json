@@ -1,3 +1,4 @@
 {
-    "python.formatting.provider": "black"
+    "python.formatting.provider": "black",
+    "python.pythonPath": "C:\\Users\\judong kim\\.virtualenvs\\cloud_fds_ai_api-9yljG2KT\\Scripts\\python.exe"
 }

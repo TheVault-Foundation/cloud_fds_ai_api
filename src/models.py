@@ -1,14 +1,17 @@
 from datetime import datetime
 
+import traceback
 import sys 
 # sys.path.append('../config')
 
 import config
+from log import Log
 
 from bson.objectid import ObjectId
 
 from mongoengine import *
 connect(config.MONGO_DB["NAME"], host=config.MONGO_DB["HOST"], port=config.MONGO_DB["PORT"], username=config.MONGO_DB["USERNAME"], password=config.MONGO_DB["PASSWORD"])
+
 
 class User(Document):
     username = StringField(required=True, unique=True, max_length=100)
@@ -101,6 +104,18 @@ class Transaction(Document):
             'score'
         ]
     }
+
+    def getAllHistory(self):
+        try:
+            trans = Transaction.objects(fromAddress = self.fromAddress, fromCurrency = self.fromCurrency).order_by('-createdAt')
+            if trans:
+                return trans
+
+            return Transaction.objects(userId = self.userId).order_by('-createdAt')
+
+        except:
+            Log.error(traceback.format_exc())
+            return None
 
 
 class DeviceType(Document):
@@ -199,3 +214,50 @@ class IpToCountryTmp(Document):
             'country'
         ]
     }
+
+
+class Seq(Document):
+    name = StringField(required=True, unique=True, max_length=200)
+    value = IntField(required=True, unique=True)
+    
+    meta = {
+        'collection': 'sequence',
+        'indexes': [
+            'name'
+        ]
+    }
+
+    @staticmethod
+    def getNextValue(seqName):
+        doc = Seq.objects(name=seqName).modify(
+                                        upsert=True, new=True,
+                                        inc__value=1, 
+                                        set__name=seqName)
+        return doc.value
+        
+
+
+class FDSAddress(Document):
+    addressId = IntField(required=True, unique=True)
+    address = StringField(required=True, max_length=200)
+    currency = StringField(required=True, max_length=20)
+    
+    meta = {
+        'collection': 'fdsAddress',
+        'indexes': [{
+                'fields': ['address', 'currency']
+            }
+        ]
+    }
+
+    @staticmethod
+    def getId(address, currency):
+        # Log.info(address + ',' + currency)
+        try:
+            doc = FDSAddress.objects.get(address=address, currency=currency)
+            return doc.addressId
+        except:            
+            doc = FDSAddress(addressId=Seq.getNextValue('fdsAddress'), address=address, currency=currency)
+            doc.save()
+            return doc.addressId
+

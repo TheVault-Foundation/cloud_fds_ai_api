@@ -83,13 +83,7 @@ class CheckTransaction:
         year = curUtc.year
         month = curUtc.month
 
-        try:
-            countDoc = ApiUsageCount.objects.get(apiId=self.tokenDoc.apiId, year=year, month=month)
-            countDoc.count += 1
-            countDoc.save()
-        except:
-            countDoc = ApiUsageCount(apiId=self.tokenDoc.apiId, year=year, month=month, count=1)
-            countDoc.save()
+        ApiUsageCount.objects(apiId=self.tokenDoc.apiId, year=year, month=month).update_one(inc__count=1, upsert=True)
 
 
     def process(self):
