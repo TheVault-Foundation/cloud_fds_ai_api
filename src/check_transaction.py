@@ -48,42 +48,18 @@ class CheckTransaction:
 
         if self.reqData.get('senderIp', ''):
             self.transaction.senderIp = self.reqData.get('senderIp', '')
-            self.transaction.country = self.findCountry(self.transaction.senderIp)
+            ipDoc = IpToCountry.findCountry(self.transaction.senderIp)
+            if ipDoc:
+                self.transaction.country = ipDoc.ctry
 
         self.transaction.transactedAt = datetime.strptime(self.reqData.get('transactedAt', ''), '%Y%m%dT%H%M%S')
 
         return True
 
 
-    def findCountry(self, ipAddr):
-        try:
-            ipArray = ipAddr.split('.')
-
-            # 1.2.3.4 = 4 + (3 * 256) + (2 * 256 * 256) + (1 * 256 * 256 * 256) is 4 + 768 + 13,1072 + 16,777,216 = 16,909,060
-            ipVal = 0
-            for i in range(4):
-                ipVal += int(ipArray[i]) * 256**(3-i)
-
-            ipDoc = IpToCountry.objects.get(ipFrom__lte=ipVal, ipTo__gte=ipVal)
-            return ipDoc.country
-
-        except:
-            Log.error(traceback.format_exc())
-            return 
-
-
     def saveTransaction(self):
         if self.transaction:
             self.transaction.save()
-
-
-    def increaseAPIUsageCount(self):
-        curUtc = datetime.utcnow()
-
-        year = curUtc.year
-        month = curUtc.month
-
-        ApiUsageCount.objects(apiId=self.tokenDoc.apiId, year=year, month=month).update_one(inc__count=1, upsert=True)
 
 
     def process(self):
@@ -99,7 +75,7 @@ class CheckTransaction:
         self.transaction.score = fds.getScore()
         self.saveTransaction()
 
-        self.increaseAPIUsageCount()
+        ApiUsageCount.increaseCount(self.tokenDoc.apiId)
                 
         return jsonify({ 
             'transaction': self.reqData,

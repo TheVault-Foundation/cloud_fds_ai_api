@@ -75,6 +75,15 @@ class ApiUsageCount(Document):
         ]
     }
 
+    @staticmethod
+    def increaseCount(apiId):
+        curUtc = datetime.utcnow()
+
+        year = curUtc.year
+        month = curUtc.month
+
+        ApiUsageCount.objects(apiId=apiId, year=year, month=month).update_one(inc__count=1, upsert=True)
+
 
 class Transaction(Document):
     userId = ObjectIdField(required=True)
@@ -107,11 +116,11 @@ class Transaction(Document):
 
     def getAllHistory(self):
         try:
-            trans = Transaction.objects(fromAddress = self.fromAddress, fromCurrency = self.fromCurrency).order_by('-createdAt')
+            trans = Transaction.objects(fromAddress = self.fromAddress, fromCurrency = self.fromCurrency).order_by('createdAt')
             if trans:
                 return trans
 
-            return Transaction.objects(userId = self.userId).order_by('-createdAt')
+            return Transaction.objects(userId = self.userId).order_by('createdAt')
 
         except:
             Log.error(traceback.format_exc())
@@ -195,6 +204,22 @@ class IpToCountry(Document):
             'country'
         ]
     }
+
+    @staticmethod
+    def findCountry(ipAddr):
+        try:
+            ipArray = ipAddr.split('.')
+
+            # 1.2.3.4 = 4 + (3 * 256) + (2 * 256 * 256) + (1 * 256 * 256 * 256) is 4 + 768 + 13,1072 + 16,777,216 = 16,909,060
+            ipVal = 0
+            for i in range(4):
+                ipVal += int(ipArray[i]) * 256**(3-i)
+
+            return IpToCountry.objects.get(ipFrom__lte=ipVal, ipTo__gte=ipVal)
+
+        except:
+            Log.error(traceback.format_exc())
+            return 
 
 class IpToCountryTmp(Document):
     ipFrom = IntField(required=True)
