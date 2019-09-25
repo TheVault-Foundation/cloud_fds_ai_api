@@ -39,6 +39,22 @@ class User(Document):
         ]
     }
 
+
+class UserAccessToken(Document):
+    userId = ObjectIdField(required=True)
+    accessToken = StringField(required=True, max_length=300)
+    expireAt = DateTimeField(required=True)
+    CreatedAt = DateTimeField(default = datetime.utcnow)
+
+    meta = {
+        'collection': 'userAccessToken',
+        'indexes': [
+            'userId',
+            '-accessToken',
+            'expireAt'
+        ]
+    }
+
     
 class UserApi(Document):
     userId = ObjectIdField(required=True)
