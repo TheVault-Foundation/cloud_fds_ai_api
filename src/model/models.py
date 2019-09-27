@@ -5,7 +5,7 @@ import sys
 # sys.path.append('../config')
 
 import config
-from log import Log
+from utils import Log
 
 from bson.objectid import ObjectId
 
@@ -114,7 +114,7 @@ class Transaction(Document):
     transactedAt = DateTimeField(required=False)  #StringField(required=False, max_length=15)
     score = DecimalField(required=True, default=0)
     txHash = StringField(required=False, max_length=200)
-    createdAt = DateTimeField(default = datetime.utcnow)
+    createdAt = DateTimeField(required=True, default = datetime.utcnow)
     updatedAt = DateTimeField()
     updatedBy = StringField(max_length=100)
     
@@ -133,6 +133,7 @@ class Transaction(Document):
     def getAllHistory(self):
         try:
             trans = Transaction.objects(fromAddress = self.fromAddress, fromCurrency = self.fromCurrency).order_by('createdAt')
+            return trans
             if trans:
                 return trans
 
@@ -200,6 +201,29 @@ class BillingType(Document):
     billingType = StringField(required=True, regex=r'^(Monthly|Metered)$', unique=True)
     
     meta = {'collection': 'billingType'}
+
+
+class Blacklist(Document):
+    userId = ObjectIdField(required=True)
+    address = StringField(required=True, max_length=200)
+    currency = StringField(required=True, max_length=20)
+    status = BooleanField(required=True, default=True) # True:blacklisted, False:allowed
+    reason = StringField(required=True)
+    txHash = StringField(required=False, max_length=200)
+    createdAt = DateTimeField(required=True, default = datetime.utcnow)
+    updatedAt = DateTimeField()
+    updatedBy = StringField(max_length=100)
+
+    meta = {
+        'collection': 'blacklist',
+        'indexes': [
+            'userId',
+            'address',
+            'currency',
+            'status',
+            '-createdAt'
+        ]
+    }
 
 
 class IpToCountry(Document):

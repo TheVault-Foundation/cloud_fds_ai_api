@@ -1,5 +1,5 @@
 from bson.objectid import ObjectId
-from bson import json_util
+from bson import json_util, errors
 
 from datetime import datetime, timedelta
 import time
@@ -8,9 +8,9 @@ from dateutil.relativedelta import relativedelta
 import traceback
 
 import utils
-from log import Log
-from models import *
-from check_transaction import CheckTransaction
+from utils import Log
+from model import *
+from fds import CheckTransaction
 
 import json
 from hashlib import sha256
@@ -74,7 +74,7 @@ class Controller:
             return jsonify({
                 'session_token': sessionToken,
                 'lifetime': self.SESSION_TOKEN_LIFETIME
-            }), 200            
+            }), 200
         except DoesNotExist:
             return self.ResError(403, "Invalid api.")
         except:
@@ -118,6 +118,35 @@ class Controller:
             else:
                 return self.ResError(401, "Invalid Authentication.")
             
+        except:
+            Log.error(traceback.format_exc())
+            return self.ResError(500, "An error occurred.")
+
+
+    def update(self, request):
+        Log.info('update()')
+        Log.info(request.data)
+
+        try:
+            sessionToken = request.headers.get("Authorization", "").split(' ')[1]
+            tokenDoc = self.isValidSessionToken(sessionToken)
+            if tokenDoc:
+                reqData = request.data
+
+                if (reqData['score'] not in [0, 100]):
+                    return self.ResError(403, "Invalid score.")
+
+                trans = Transaction.objects.get(id=ObjectId(reqData['id']))
+                trans.score = reqData['score']
+                trans.save()
+
+                return jsonify({
+                }), 200
+            else:
+                return self.ResError(401, "Invalid Authentication.")
+        
+        except (DoesNotExist, errors.InvalidId) as e:
+            return self.ResError(403, "Invalid id.")
         except:
             Log.error(traceback.format_exc())
             return self.ResError(500, "An error occurred.")

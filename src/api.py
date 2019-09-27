@@ -1,11 +1,11 @@
 import sys 
-sys.path.append('../config')  # for config module
+# sys.path.append('../config')  # for config module
 
 from flask import request, Response, url_for
 from flask_api import FlaskAPI, status, exceptions
 
-from log import Log
-from controller import Controller
+from utils import Log
+from controller.controller import Controller
 
 import json
 

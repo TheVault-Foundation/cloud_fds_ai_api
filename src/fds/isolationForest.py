@@ -1,20 +1,13 @@
-import pandas as pd 
-from imblearn.under_sampling import RandomUnderSampler
-from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
-import itertools
-import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn.ensemble import IsolationForest
 from sklearn.decomposition import PCA
 
-from nltk.probability import FreqDist
-
 import random
 import math
 
-from log import Log
-from models import *
+from utils import Log
+from model import *
 
 
 class isolationForest:
@@ -27,7 +20,8 @@ class isolationForest:
 
         self.clf = IsolationForest(behaviour='new', random_state=np.random.RandomState(42), contamination="auto")
 
-        npArray = np.asarray(transHistory)
+        # npArray = np.asarray(transHistory)
+        npArray = transHistory
         self.clf.fit(npArray.reshape(-1, self.DATA_COL_COUNT))
         
         # pca = PCA()
