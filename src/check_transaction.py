@@ -79,5 +79,6 @@ class CheckTransaction:
                 
         return jsonify({ 
             'transaction': self.reqData,
-            'score': self.transaction.score
+            'score': self.transaction.score,
+            'id': str(self.transaction.id)
         }), 200

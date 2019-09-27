@@ -35,6 +35,11 @@ def check():
     con = Controller()
     return con.check(request)
 
+@app.route(ApiRoot + '/transaction/update', methods=['POST'])
+def update():
+    con = Controller()
+    return con.update(request)
+
 @app.route(ApiRoot + '/session/close', methods=['POST'])
 def close():
     con = Controller()
