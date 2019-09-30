@@ -58,6 +58,7 @@ class UserAccessToken(Document):
     
 class UserApi(Document):
     userId = ObjectIdField(required=True)
+    apiName = StringField(max_length=100)
     apiKey = StringField(required=True, unique=True, max_length=100)
     apiSecret = StringField(required=True, max_length=300)
     isActive = BooleanField(required=True, default=True)
