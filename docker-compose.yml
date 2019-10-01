@@ -1,0 +1,7 @@
+version: "3"
+services:
+  cloud-fds-ai-api:
+    build: .
+    image: cloud-fds-ai-api:1.0
+    ports:
+      - "6000:6000"
