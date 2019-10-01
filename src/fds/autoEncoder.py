@@ -6,8 +6,15 @@ from keras.layers import Input, Dense
 from keras import regularizers
 
 if __name__ == "__main__":
+    import os
     import sys 
-    sys.path.append('../config')  # for config module
+    cwd = os.getcwd()
+    sys.path.append(cwd + '/..')  # for config module
+    sys.path.append(cwd + '/../model')  # for config module
+    sys.path.append(cwd + '/../utils')  # for config module
+
+
+import config
 
 from log import Log
 from models import *

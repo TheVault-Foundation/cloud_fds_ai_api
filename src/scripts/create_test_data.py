@@ -1,5 +1,15 @@
 from bson import json_util
 
+
+if __name__ == "__main__":
+    import os
+    import sys 
+    cwd = os.getcwd()
+    sys.path.append(cwd + '/..')  # for config module
+    sys.path.append(cwd + '/../model')  # for config module
+    sys.path.append(cwd + '/../utils')  # for config module
+
+    
 from log import Log
 from models import *
 

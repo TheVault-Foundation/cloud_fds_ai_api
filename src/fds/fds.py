@@ -49,7 +49,7 @@ class FDS:
         data.append(FDSAddress.getId(transaction.fromAddress, transaction.fromCurrency))
         data.append(FDSAddress.getId(transaction.toAddress, transaction.toCurrency))
         
-        data.append(float(transaction.amount))
+        data.append(float(transaction.amount)/100)
         data.append(transaction.senderDeviceId)
 
         if transaction.transactedAt:

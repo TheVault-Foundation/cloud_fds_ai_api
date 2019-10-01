@@ -1,6 +1,11 @@
 if __name__ == "__main__":
+    import os
     import sys 
-    sys.path.append('../config')  # for config module
+    cwd = os.getcwd()
+    sys.path.append(cwd + '/..')  # for config module
+    sys.path.append(cwd + '/../model')  # for config module
+    sys.path.append(cwd + '/../utils')  # for config module
+
 
 import requests
 import json
@@ -39,6 +44,7 @@ URL_LATEST_BLOCK_NUMBER = URL_BASE + "module=proxy&action=eth_blockNumber&apikey
 URL_TRANSACTION_COUNT = URL_BASE + "module=proxy&action=eth_getBlockTransactionCountByNumber&tag={0}&apikey=" + API_KEY
 URL_TRANSACTION_BY_BLOCK_INDEX = URL_BASE + "module=proxy&action=eth_getTransactionByBlockNumberAndIndex&tag={0}&index=0x{1:x}&apikey=" + API_KEY
 URL_ADDRESS_TRANSACTION = URL_BASE + "module=account&action=txlist&address={0}&startblock=0&endblock=99999999&sort=asc&apikey=" + API_KEY
+URL_ADDRESS_TOKEN_TRANSACTION = URL_BASE + "module=account&action=tokentx&address={0}&startblock=5000000&endblock=999999999&sort=asc&apikey=" + API_KEY
 
 def readFromServer(url):
     try:
@@ -72,6 +78,15 @@ def getTransactionList(address):
     return res["result"]
 
 
+'''
+"blockNumber":"5999708","timeStamp":"1532114373","hash":"0x9ab3b4c0897c2d032b74a5eafce39e6e399ada66802d467dbf15c56ded46e6ab","nonce":"9888","blockHash":"0x082298475c4b2abf7880a6e6e20511e1c8bcb8e5e3ecd1398901df40609733e4","from":"0xba826fec90cefdf6706858e5fbafcb27a290fbe0","contractAddress":"0xc5bbae50781be1669306b9e001eff57a2957b09d","to":"0x4aee792a88edda29932254099b9d1e06d537883f","value":"1819140188","tokenName":"Gifto","tokenSymbol":"GTO","tokenDecimal":"5","transactionIndex":"23","gas":"152387","gasPrice":"60000000000","gasUsed":"52387","cumulativeGasUsed":"1314990","input":"deprecated","confirmations":"2648498"}
+'''
+def getTokenTransactionList(address):
+    res = readFromServer(URL_ADDRESS_TOKEN_TRANSACTION.format(address))
+
+    return res["result"]
+
+
 
 
 if __name__ == "__main__":
@@ -94,14 +109,39 @@ if __name__ == "__main__":
             trans = getTransaction(block, i)
             # print(res)
 
-            list = getTransactionList(trans["from"])
+            list = getTokenTransactionList(trans["from"])
             if list:
                 for e in list:
-                    if e["isError"] == '0':
+                    if e["value"] != '0':
                         try:
                             Transaction.objects(fromAddress = e["from"], toAddress = e["to"], txHash = e["hash"]).modify(
                                         upsert=True, new=True,
-                                        userId = ObjectId("5d75c245daf67e862aabb904"),
+                                        userId = ObjectId("5d8c17c43402a409bd39f40c"),
+                                        set__fromAddress = e["from"],
+                                        set__fromCurrency = e["tokenSymbol"],
+                                        set__toAddress = e["to"],
+                                        set__toCurrency = e["tokenSymbol"],
+                                        set__amount = float(e["value"])/(10**int(e["tokenDecimal"])),
+                                        set__senderDeviceId = 0,
+                                        set__transactedAt = datetime.utcfromtimestamp(int(e["timeStamp"])),
+                                        set__score = 0,
+                                        set__txHash = e["hash"],
+                                        set__createdAt = datetime.utcnow)
+
+
+                            print(e)
+                            print("{0}:{1} -> {2}:{3} eth:{4}".format(e["hash"], e["from"], e["to"], float(e["value"])/(10**int(e["tokenDecimal"])), datetime.utcfromtimestamp(int(e["timeStamp"]))))
+                        except:
+                            print(e)
+
+            list = getTransactionList(trans["from"])
+            if list:
+                for e in list:
+                    if e["isError"] == '0' and e["value"] != '0':
+                        try:
+                            Transaction.objects(fromAddress = e["from"], toAddress = e["to"], txHash = e["hash"]).modify(
+                                        upsert=True, new=True,
+                                        userId = ObjectId("5d8c17c43402a409bd39f40c"),
                                         set__fromAddress = e["from"],
                                         set__fromCurrency = "ETH",
                                         set__toAddress = e["to"],
