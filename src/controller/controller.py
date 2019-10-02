@@ -35,13 +35,21 @@ class Controller:
 
         token = sha256(json_util.dumps(tokinObj).encode('utf-8')).hexdigest()
 
-        session = ApiSessionToken(
-            apiId = api.id,
-            sessionToken = token,
-            expireAt = expireAt,
-            CreatedAt = curTime
+        # session = ApiSessionToken(
+        #     apiId = api.id,
+        #     sessionToken = token,
+        #     expireAt = expireAt,
+        #     CreatedAt = curTime
+        # )
+        # session.save()
+
+        session = ApiSessionToken.objects(apiId=api.id).modify(
+                upsert=True, new=True,
+                set__apiId = api.id,
+                set__sessionToken = token,
+                set__expireAt = expireAt,
+                set__CreatedAt = curTime
         )
-        session.save()
 
         return session.sessionToken
         
@@ -76,7 +84,7 @@ class Controller:
                 'lifetime': self.SESSION_TOKEN_LIFETIME
             }), 200
         except DoesNotExist:
-            return self.ResError(403, "Invalid api.")
+            return self.ResError(403, "Invalid api key or secret.")
         except:
             Log.error(traceback.format_exc())
             return self.ResError(500, "An error occurred.")

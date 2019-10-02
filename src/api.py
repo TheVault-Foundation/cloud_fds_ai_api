@@ -1,10 +1,10 @@
 import sys 
 # sys.path.append('../config')  # for config module
 
-from flask import request, Response, url_for
+from flask import request, Response, url_for, jsonify
 from flask_api import FlaskAPI, status, exceptions
+from werkzeug.exceptions import default_exceptions
 
-from utils import Log
 from controller.controller import Controller
 
 import json
@@ -44,6 +44,13 @@ def update():
 def close():
     con = Controller()
     return con.close(request)
+
+
+def _handle_http_exception(e):
+    return jsonify({ "error": {"message": e.description, "code": e.code} }), e.code
+
+for code in default_exceptions:
+    app.errorhandler(code)(_handle_http_exception)
 
 
 if __name__ == "__main__":
