@@ -16,7 +16,8 @@ COPY --from=builder /install /usr/local
 RUN mkdir /app
 WORKDIR /app
 COPY . /app
-
+RUN mkdir logs
+COPY src/config_prod.py src/config.py
 
 EXPOSE 6000
 
