@@ -42,7 +42,7 @@ class User(Document):
 
 class UserAccessToken(Document):
     userId = ObjectIdField(required=True)
-    accessToken = StringField(required=True, max_length=300)
+    accessToken = StringField(required=True, max_length=1000)
     expireAt = DateTimeField(required=True)
     CreatedAt = DateTimeField(default = datetime.utcnow)
 
@@ -78,6 +78,7 @@ class UserApi(Document):
 
 
 class ApiUsageCount(Document):
+    userId = ObjectIdField(required=True)
     apiId = ObjectIdField(required=True)
     year = IntField(required=True)
     month = IntField(required=True)
