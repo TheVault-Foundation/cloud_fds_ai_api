@@ -80,27 +80,23 @@ class UserApi(Document):
 class ApiUsageCount(Document):
     userId = ObjectIdField(required=True)
     apiId = ObjectIdField(required=True)
-    year = IntField(required=True)
-    month = IntField(required=True)
+    date = DateField(required=True)
     count = IntField(required=True, default=0)
     
     meta = {
         'collection': 'apiUsageCount',
         'indexes': [
+            'userId',
             'apiId',
-            '-year',
-            '-month'
+            '-date'
         ]
     }
 
     @staticmethod
     def increaseCount(apiId):
-        curUtc = datetime.utcnow()
+        # curUtc = datetime.utcnow()
 
-        year = curUtc.year
-        month = curUtc.month
-
-        ApiUsageCount.objects(apiId=apiId, year=year, month=month).update_one(inc__count=1, upsert=True)
+        ApiUsageCount.objects(apiId=apiId, date=datetime.utcnow).update_one(inc__count=1, upsert=True)
 
 
 class Transaction(Document):
@@ -200,9 +196,17 @@ class UserInvoice(Document):
 
 
 class BillingType(Document):
-    billingType = StringField(required=True, regex=r'^(Monthly|Metered)$', unique=True)
+    billingType = StringField(required=True, regex=r'^(Free trial|Monthly|Metered)$', unique=True)
     
     meta = {'collection': 'billingType'}
+
+
+class Price(Document):
+    billingType = ObjectIdField(required=True)
+    startDate = DateField(required=True)
+    price = DecimalField(required=True)
+    createdAt = DateTimeField(required=True)
+    createdBy = StringField(required=True, max_length=100)
 
 
 class Blacklist(Document):
