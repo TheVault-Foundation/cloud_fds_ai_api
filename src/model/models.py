@@ -201,12 +201,27 @@ class BillingType(Document):
     meta = {'collection': 'billingType'}
 
 
+class UserChangeBillingType(Document):
+    userId = ObjectIdField(required=True)
+    billingType = ObjectIdField(required=True)
+    startDate = DateField(required=True)
+    createdAt = DateTimeField(required=True)
+    createdBy = StringField(required=True, max_length=100)
+    isUpdated = BooleanField(required=True, default=False)
+    updatedAt = DateTimeField(required=False)
+
+    meta = {'collection': 'userChangeBillingType'}
+
+
 class Price(Document):
     billingType = ObjectIdField(required=True)
     startDate = DateField(required=True)
+    endDate = DateField(required=False)
     price = DecimalField(required=True)
     createdAt = DateTimeField(required=True)
     createdBy = StringField(required=True, max_length=100)
+
+    meta = {'collection': 'price'}
 
 
 class Blacklist(Document):
