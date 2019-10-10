@@ -60,7 +60,11 @@ class Controller:
 
         Log.info(strippedToken)
         try:
-            return ApiSessionToken.objects.get(sessionToken=strippedToken, expireAt__gt=datetime.utcnow)
+            token = ApiSessionToken.objects.get(sessionToken=strippedToken, expireAt__gt=datetime.utcnow)
+
+            user = User.objects.get(id=token.getUserId(), isActive=True)
+
+            return token
         except:
             Log.error(traceback.format_exc())
             return False

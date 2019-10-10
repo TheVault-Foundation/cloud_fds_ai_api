@@ -93,10 +93,11 @@ class ApiUsageCount(Document):
     }
 
     @staticmethod
-    def increaseCount(apiId):
+    def increaseCount(token):
         # curUtc = datetime.utcnow()
 
-        ApiUsageCount.objects(apiId=apiId, date=datetime.utcnow).update_one(inc__count=1, upsert=True)
+        userId = token.getUserId()
+        ApiUsageCount.objects(userId=userId, apiId=token.apiId, date=datetime.utcnow).update_one(set__userId=userId, inc__count=1, upsert=True)
 
 
 class Transaction(Document):

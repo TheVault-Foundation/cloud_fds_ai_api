@@ -75,7 +75,7 @@ class CheckTransaction:
         self.transaction.score = fds.getScore()
         self.saveTransaction()
 
-        ApiUsageCount.increaseCount(self.tokenDoc.apiId)
+        ApiUsageCount.increaseCount(self.tokenDoc)
                 
         return jsonify({ 
             'transaction': self.reqData,
